@@ -89,6 +89,7 @@ const validateFlavour = async (operation, { name, price, id }) => {
   return errors;
 };
 
+// getCustomers
 const getCustomers = async () => await io.getItems("customers");
 
 const getCustomerIds = async () => {
@@ -113,28 +114,56 @@ const getOrder = async (id) => {
   return orders.find((order) => order.id === id);
 };
 
-const validateCustomer = async (operation, { emailAddress, name, id }) => {
+const validateCustomer = async (operation, { email, name, id }) => {
   let errors = [];
 
   // E-mail field may not be empty.
-  /*   if (emailAddress === "") {
-    console.log("Hi");
-    errors.push(`Please enter a valid e-mail address.`);
+  if (operation === "add" && email === "") {
+    errors.push("Please enter a valid e-mail address.");
   }
- */
-  // When adding a customer, the email cannot be the same as an existing customer.
-  // gebruik .includes() om de if statement te maken
-  // allCustomers is een Array met daarbinnen Customer objecten.
 
-  /*   const allCustomers = await sendRequest("GET", "customers");
-  const allEmailAddresses = allCustomers.email;
-  //const array = Object.keys(allEmailAddresses);
+  // When adding a customer, the email cannot be the same as an existing customer.
+  const emails = await getCustomerEmails();
+  if (operation === "add" && emails.includes(email)) {
+    errors.push(
+      "This e-mail address is already taken. Provide us with a unique one."
+    );
+  }
+
+  // When updating a customer, the email cannot be the same as another existing customer.
+  if (operation === "update" && emails.includes(email)) {
+    errors.push(
+      "This e-mail address is already taken. Provide us with a unique one."
+    );
+  }
+
+  // The name of a customer needs to be at least 2 characters long.
+  if ((operation === "add" || operation === "update") && name.length < 2) {
+    errors.push("A name should be at least 2 letters long.");
+  }
+
+  // The name of a customer can only consist of letters a-z and spaces (upper case is allowed).
+  const permittedSymbols = /[a-zA-Z\s]+/g;
+  // This 'regular expression' matches letters a to z
+  // (both lowercase and uppercase) and spaces '\s'.
+  // The plus sign + in a regular expression is a quantifier that indicates one or more occurrences of the preceding pattern.
+  // The 'g' stands for Global and finds all matches in the string.
+
+  const nameString = name.toString(); // de parameter wordt naar een string geconverteerd.
+  console.log(`Dit is de inhoud van de const 'nameString': ${nameString} `);
+  const symbolCheck = nameString.search(permittedSymbols); // Telt het aantal overeenkomende tekens dat nameToString en permittedSymbols met elkaar hebben.
+  console.log(`Dit is de waarde van symbolCheck: ${symbolCheck}`);
+  console.log(`Dit is de lengte van nameString: ${nameString.length}`);
+  console.log(`nameString typof: ${typeof nameString}`);
   if (
-    operation == "add" &&
-    allEmailAddresses.includes(emailAddress) == "true"
+    (operation === "add" || operation === "update") &&
+    symbolCheck != nameString.length
   ) {
-    errors.push("This e-mail address is already taken.");
-  } */
+    errors.push(
+      "Please only use lowercase letters, uppercase letters and/or spaces."
+    );
+  }
+  return errors;
 };
 
 const validateOrder = async (
@@ -186,6 +215,7 @@ const validateAddUpdate = async (operation, itemType, data) => {
       errors = ["Incorrect itemType"];
       break;
   }
+
   return [errors.length > 0, errors];
 };
 
